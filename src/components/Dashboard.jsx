@@ -15,6 +15,15 @@ export default function Dashboard() {
     getProfile();
   }, []);
 
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!session) {
+        navigate('/');
+      }
+    });
+  }, []);
+  
+
   const handleLogout = async () => {
     await supabase.auth.signOut();
     navigate('/');

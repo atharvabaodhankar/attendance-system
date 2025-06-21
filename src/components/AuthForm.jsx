@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { supabase } from "../supabaseClient";
 import useAuthInsert from "../hooks/useAuthInsert";
+import { useNavigate } from 'react-router-dom';
 
 export default function AuthForm() {
   const [isLogin, setIsLogin] = useState(true);
@@ -9,6 +10,7 @@ export default function AuthForm() {
   const [name, setName] = useState("");
   const [role, setRole] = useState("student"); // or 'teacher'
   const [error, setError] = useState("");
+  const navigate = useNavigate();
 
   useAuthInsert({ name, role, shouldInsert: !isLogin });
 
@@ -21,7 +23,11 @@ export default function AuthForm() {
         email,
         password,
       });
-      if (error) setError(error.message);
+  
+      if (error) return setError(error.message);
+  
+      // ✅ Add navigation
+      navigate("/dashboard");
     } else {
       const { data, error: signUpError } = await supabase.auth.signUp({
         email,
@@ -30,10 +36,10 @@ export default function AuthForm() {
   
       if (signUpError) return setError(signUpError.message);
   
-      // Inform user to confirm email
       alert('Registration successful! Check your email to confirm your account.');
     }
   };
+  
   
 
   return (
