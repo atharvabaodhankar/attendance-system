@@ -1,18 +1,21 @@
-import { useState } from 'react';
-import { supabase } from '../supabaseClient';
+import { useState } from "react";
+import { supabase } from "../supabaseClient";
+import useAuthInsert from "../hooks/useAuthInsert";
 
 export default function AuthForm() {
   const [isLogin, setIsLogin] = useState(true);
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [name, setName] = useState('');
-  const [role, setRole] = useState('student'); // or 'teacher'
-  const [error, setError] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [name, setName] = useState("");
+  const [role, setRole] = useState("student"); // or 'teacher'
+  const [error, setError] = useState("");
+
+  useAuthInsert({ name, role, shouldInsert: !isLogin });
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
-
+  
     if (isLogin) {
       const { error } = await supabase.auth.signInWithPassword({
         email,
@@ -20,34 +23,18 @@ export default function AuthForm() {
       });
       if (error) setError(error.message);
     } else {
-     
-        const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
-            email,
-            password,
-          });
-          
-          if (signUpError) return setError(signUpError.message);
-          
-          // Wait for session to activate (important)
-          const { data: sessionData } = await supabase.auth.getSession();
-          const userId = sessionData.session?.user?.id;
-          
-          if (!userId) {
-            return setError("User session not active. Try logging in after registering.");
-          }
-          
-          const { error: insertError } = await supabase.from('users').insert({
-            id: userId,
-            name,
-            role,
-          });
-          
-          if (insertError) return setError(insertError.message);
-          
-
-      if (insertError) setError(insertError.message);
+      const { data, error: signUpError } = await supabase.auth.signUp({
+        email,
+        password,
+      });
+  
+      if (signUpError) return setError(signUpError.message);
+  
+      // Inform user to confirm email
+      alert('Registration successful! Check your email to confirm your account.');
     }
   };
+  
 
   return (
     <div className="flex justify-center items-center h-screen bg-gray-100">
@@ -55,7 +42,9 @@ export default function AuthForm() {
         onSubmit={handleSubmit}
         className="bg-white p-6 rounded-xl shadow-lg w-full max-w-sm"
       >
-        <h2 className="text-2xl font-bold mb-4">{isLogin ? 'Login' : 'Register'}</h2>
+        <h2 className="text-2xl font-bold mb-4">
+          {isLogin ? "Login" : "Register"}
+        </h2>
 
         {!isLogin && (
           <>
@@ -100,17 +89,17 @@ export default function AuthForm() {
           type="submit"
           className="bg-blue-600 text-white w-full py-2 rounded hover:bg-blue-700"
         >
-          {isLogin ? 'Login' : 'Register'}
+          {isLogin ? "Login" : "Register"}
         </button>
 
         <p className="mt-4 text-sm text-center">
-          {isLogin ? "Don't have an account?" : 'Already have an account?'}
+          {isLogin ? "Don't have an account?" : "Already have an account?"}
           <button
             type="button"
             onClick={() => setIsLogin(!isLogin)}
             className="text-blue-600 ml-1 underline"
           >
-            {isLogin ? 'Register' : 'Login'}
+            {isLogin ? "Register" : "Login"}
           </button>
         </p>
       </form>
