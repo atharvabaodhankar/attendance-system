@@ -20,19 +20,30 @@ export default function AuthForm() {
       });
       if (error) setError(error.message);
     } else {
-      const { data, error: signUpError } = await supabase.auth.signUp({
-        email,
-        password,
-      });
-
-      if (signUpError) return setError(signUpError.message);
-
-      // Insert name + role into `users` table
-      const { error: insertError } = await supabase.from('users').insert({
-        id: data.user.id,
-        name,
-        role,
-      });
+     
+        const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+            email,
+            password,
+          });
+          
+          if (signUpError) return setError(signUpError.message);
+          
+          // Wait for session to activate (important)
+          const { data: sessionData } = await supabase.auth.getSession();
+          const userId = sessionData.session?.user?.id;
+          
+          if (!userId) {
+            return setError("User session not active. Try logging in after registering.");
+          }
+          
+          const { error: insertError } = await supabase.from('users').insert({
+            id: userId,
+            name,
+            role,
+          });
+          
+          if (insertError) return setError(insertError.message);
+          
 
       if (insertError) setError(insertError.message);
     }
