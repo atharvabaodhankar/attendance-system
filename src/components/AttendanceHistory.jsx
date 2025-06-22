@@ -163,7 +163,7 @@ export default function AttendanceHistory({ userId, userRole }) {
                 <tr key={record.id}>
                   <td className="py-2 px-4 border-b">{formatDate(record.date)}</td>
                   {userRole === 'teacher' && !selectedStudent && (
-                    <td className="py-2 px-4 border-b">{record.users.name}</td>
+                    <td className="py-2 px-4 border-b">{record.users?.name || 'N/A'}</td>
                   )}
                   <td className="py-2 px-4 border-b">
                     <span className={`font-medium ${record.status === 'present' ? 'text-green-600' : 'text-red-600'}`}>
