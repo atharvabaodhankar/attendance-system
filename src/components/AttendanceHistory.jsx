@@ -23,7 +23,7 @@ export default function AttendanceHistory({ userId, userRole }) {
     try {
       const { data, error } = await supabase
         .from('users')
-        .select('id, name')
+        .select('id, name, roll_number')
         .eq('role', 'student');
 
       if (error) throw error;
@@ -47,7 +47,7 @@ export default function AttendanceHistory({ userId, userRole }) {
           id,
           date,
           status,
-          users!attendance_user_id_fkey(name),
+          users!attendance_user_id_fkey(name, roll_number),
           marked_by_user:users!attendance_marked_by_fkey(name)
         `)
         .gte('date', startDate)
@@ -134,7 +134,7 @@ export default function AttendanceHistory({ userId, userRole }) {
             >
               <option value="">All Students</option>
               {students.map((student) => (
-                <option key={student.id} value={student.id}>{student.name}</option>
+                <option key={student.id} value={student.id}>{student.name} ({student.roll_number || 'N/A'})</option>
               ))}
             </select>
           </div>
@@ -152,7 +152,10 @@ export default function AttendanceHistory({ userId, userRole }) {
               <tr>
                 <th className="py-2 px-4 border-b">Date</th>
                 {userRole === 'teacher' && !selectedStudent && (
-                  <th className="py-2 px-4 border-b">Student</th>
+                  <>
+                    <th className="py-2 px-4 border-b">Roll Number</th>
+                    <th className="py-2 px-4 border-b">Student Name</th>
+                  </>
                 )}
                 <th className="py-2 px-4 border-b">Status</th>
                 <th className="py-2 px-4 border-b">Marked By</th>
@@ -163,7 +166,10 @@ export default function AttendanceHistory({ userId, userRole }) {
                 <tr key={record.id}>
                   <td className="py-2 px-4 border-b">{formatDate(record.date)}</td>
                   {userRole === 'teacher' && !selectedStudent && (
-                    <td className="py-2 px-4 border-b">{record.users?.name || 'N/A'}</td>
+                    <>
+                      <td className="py-2 px-4 border-b">{record.users?.roll_number || 'N/A'}</td>
+                      <td className="py-2 px-4 border-b">{record.users?.name || 'N/A'}</td>
+                    </>
                   )}
                   <td className="py-2 px-4 border-b">
                     <span className={`font-medium ${record.status === 'present' ? 'text-green-600' : 'text-red-600'}`}>

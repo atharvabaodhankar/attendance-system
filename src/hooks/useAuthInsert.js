@@ -2,7 +2,7 @@
 import { useEffect } from 'react';
 import { supabase } from '../supabaseClient';
 
-export default function useAuthInsert({ name, role, shouldInsert }) {
+export default function useAuthInsert({ name, role, rollNumber, shouldInsert }) {
   useEffect(() => {
     if (!shouldInsert || !name || !role) return;
 
@@ -28,6 +28,7 @@ export default function useAuthInsert({ name, role, shouldInsert }) {
               id: userId,
               name,
               role,
+              ...(role === 'student' && { roll_number: rollNumber }),
             });
 
             if (insertError) {
@@ -45,5 +46,5 @@ export default function useAuthInsert({ name, role, shouldInsert }) {
     return () => {
       listener?.subscription?.unsubscribe();
     };
-  }, [name, role, shouldInsert]);
+  }, [name, role, rollNumber, shouldInsert]);
 }

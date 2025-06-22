@@ -28,7 +28,7 @@ export default function AttendanceForm({ userId, userName, userRole }) {
     try {
       const { data, error } = await supabase
         .from('users')
-        .select('id, name')
+        .select('id, name, roll_number')
         .eq('role', 'student');
 
       if (error) throw error;
@@ -199,52 +199,57 @@ export default function AttendanceForm({ userId, userName, userRole }) {
         </div>
       )}
 
-      <div className="overflow-x-auto">
-        <table className="min-w-full bg-white">
-          <thead>
-            <tr>
-              <th className="py-2 px-4 border-b">Student Name</th>
-              <th className="py-2 px-4 border-b">Status</th>
-              <th className="py-2 px-4 border-b">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {students.map((student) => {
-              const attendanceRecord = attendanceRecords[student.id];
-              const status = attendanceRecord ? attendanceRecord.status : null;
-              
-              return (
-                <tr key={student.id}>
-                  <td className="py-2 px-4 border-b">{student.name}</td>
-                  <td className="py-2 px-4 border-b">
-                    <span className={`font-medium ${status === 'present' ? 'text-green-600' : status === 'absent' ? 'text-red-600' : 'text-gray-500'}`}>
-                      {status ? status.toUpperCase() : 'Not Marked'}
-                    </span>
-                  </td>
-                  <td className="py-2 px-4 border-b">
-                    <div className="flex space-x-2">
+
+
+        <div className="overflow-x-auto">
+          <table className="min-w-full bg-white">
+            <thead>
+              <tr>
+                <th className="py-2 px-4 border-b">Roll Number</th>
+                <th className="py-2 px-4 border-b">Name</th>
+                <th className="py-2 px-4 border-b">Status</th>
+                <th className="py-2 px-4 border-b">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {students.map((student) => {
+                const record = attendanceRecords[student.id];
+                const status = record ? record.status : 'not marked';
+                return (
+                  <tr key={student.id}>
+                    <td className="py-2 px-4 border-b">{student.roll_number || 'N/A'}</td>
+                    <td className="py-2 px-4 border-b">{student.name}</td>
+                    <td className="py-2 px-4 border-b">
+                      <span className={`font-medium ${
+                        status === 'present' ? 'text-green-600' :
+                        status === 'absent' ? 'text-red-600' :
+                        'text-gray-600'
+                      }`}>
+                        {status.toUpperCase()}
+                      </span>
+                    </td>
+                    <td className="py-2 px-4 border-b">
                       <button
                         onClick={() => markAttendance(student.id, 'present')}
-                        disabled={loading}
-                        className="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600 disabled:bg-green-300"
+                        disabled={loading || status === 'present'}
+                        className="bg-green-500 text-white px-3 py-1 rounded mr-2 hover:bg-green-600 disabled:opacity-50"
                       >
                         Present
                       </button>
                       <button
                         onClick={() => markAttendance(student.id, 'absent')}
-                        disabled={loading}
-                        className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 disabled:bg-red-300"
+                        disabled={loading || status === 'absent'}
+                        className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 disabled:opacity-50"
                       >
                         Absent
                       </button>
-                    </div>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
     </div>
   );
 }

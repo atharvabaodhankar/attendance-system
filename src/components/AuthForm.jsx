@@ -9,10 +9,11 @@ export default function AuthForm() {
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [role, setRole] = useState("student"); // or 'teacher'
+  const [rollNumber, setRollNumber] = useState("");
   const [error, setError] = useState("");
   const navigate = useNavigate();
 
-  useAuthInsert({ name, role, shouldInsert: !isLogin });
+  useAuthInsert({ name, role, rollNumber, shouldInsert: !isLogin });
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -69,6 +70,15 @@ export default function AuthForm() {
               <option value="student">Student</option>
               <option value="teacher">Teacher</option>
             </select>
+            {role === 'student' && (
+              <input
+                className="w-full p-2 mb-2 border rounded"
+                placeholder="Roll Number"
+                value={rollNumber}
+                onChange={(e) => setRollNumber(e.target.value)}
+                required
+              />
+            )}
           </>
         )}
 
