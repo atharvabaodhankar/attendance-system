@@ -46,8 +46,8 @@ export default function AuthForm() {
         });
 
         if (insertError) {
-          console.error('Failed to insert user profile:', insertError.message);
-          setError('Registration successful, but failed to create user profile. Please contact support.');
+          console.error('Failed to insert user profile:', insertError.message, insertError);
+          setError('Registration successful, but failed to create user profile. Please contact support. Error: ' + insertError.message);
           return;
         }
         console.log('✅ User profile inserted');
