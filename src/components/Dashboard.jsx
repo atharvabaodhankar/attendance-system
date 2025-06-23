@@ -11,9 +11,39 @@ export default function Dashboard() {
 
   useEffect(() => {
     const getProfile = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      console.log('User from getUser:', user);
+      console.log('Error from getUser:', userError);
+      if (userError || !user) {
+        console.error('Error fetching user:', userError);
+        navigate('/'); // Redirect to login if user is not found or session is invalid
+        return;
+      }
+      console.log('User ID for fetching:', user.id);
       const { data, error } = await supabase.from('users').select('*').eq('id', user.id).single();
-      if (!error) setUserData(data);
+      console.log('Data from users table:', data);
+      console.log('Error from users table:', error);
+      if (error && error.code === 'PGRST116') { // PGRST116 means 0 rows returned
+        console.warn('User profile not found, creating one...');
+        const { error: insertError } = await supabase.from('users').insert({
+          id: user.id,
+          name: user.email, // Default name, user can update later
+          role: 'student', // Default role, user can update later
+        });
+        if (insertError) {
+          console.error('Error creating user profile:', insertError);
+          navigate('/'); // Redirect to login if profile creation fails
+          return;
+        }
+        const { data: newUserData } = await supabase.from('users').select('*').eq('id', user.id).single();
+        setUserData(newUserData);
+      } else if (error) {
+        console.error('Error fetching user profile:', error);
+        navigate('/'); // Redirect to login for other errors
+        return;
+      } else {
+        setUserData(data);
+      }
     };
     getProfile();
   }, []);

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { supabase } from "../supabaseClient";
-import useAuthInsert from "../hooks/useAuthInsert";
+
 import { useNavigate } from 'react-router-dom';
 
 export default function AuthForm() {
@@ -13,7 +13,7 @@ export default function AuthForm() {
   const [error, setError] = useState("");
   const navigate = useNavigate();
 
-  useAuthInsert({ name, role, rollNumber, shouldInsert: !isLogin });
+
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -36,8 +36,24 @@ export default function AuthForm() {
       });
   
       if (signUpError) return setError(signUpError.message);
-  
+
+      if (data.user) {
+        const { error: insertError } = await supabase.from('users').insert({
+          id: data.user.id,
+          name,
+          role,
+          ...(role === 'student' && { roll_number: rollNumber }),
+        });
+
+        if (insertError) {
+          console.error('Failed to insert user profile:', insertError.message);
+          setError('Registration successful, but failed to create user profile. Please contact support.');
+          return;
+        }
+        console.log('✅ User profile inserted');
+      }
       alert('Registration successful! Check your email to confirm your account.');
+      navigate("/dashboard"); // Navigate to dashboard after successful registration and profile insert
     }
   };
   
