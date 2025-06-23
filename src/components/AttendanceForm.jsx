@@ -199,6 +199,62 @@ export default function AttendanceForm({ userId, userName, userRole }) {
         </div>
       )}
 
+      {loading && <p className="text-center py-4">Loading students and attendance...</p>}
+
+      {!loading && students.length > 0 ? (
+        <div className="overflow-x-auto">
+          <table className="min-w-full bg-white">
+            <thead>
+              <tr>
+                <th className="py-2 px-4 border-b">Roll Number</th>
+                <th className="py-2 px-4 border-b">Student Name</th>
+                <th className="py-2 px-4 border-b">Status</th>
+                <th className="py-2 px-4 border-b">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {students.map((student) => {
+                const record = attendanceRecords[student.id];
+                const status = record ? record.status : 'Not Marked';
+                return (
+                  <tr key={student.id}>
+                    <td className="py-2 px-4 border-b">{student.roll_number || 'N/A'}</td>
+                    <td className="py-2 px-4 border-b">{student.name}</td>
+                    <td className="py-2 px-4 border-b">
+                      <span className={`font-medium ${
+                        status === 'present' ? 'text-green-600' :
+                        status === 'absent' ? 'text-red-600' :
+                        'text-gray-600'
+                      }`}>
+                        {status.toUpperCase()}
+                      </span>
+                    </td>
+                    <td className="py-2 px-4 border-b">
+                      <button
+                        onClick={() => markAttendance(student.id, 'present')}
+                        className="bg-green-500 text-white px-3 py-1 rounded text-sm mr-2 hover:bg-green-600"
+                        disabled={loading || status === 'present'}
+                      >
+                        Present
+                      </button>
+                      <button
+                        onClick={() => markAttendance(student.id, 'absent')}
+                        className="bg-red-500 text-white px-3 py-1 rounded text-sm hover:bg-red-600"
+                        disabled={loading || status === 'absent'}
+                      >
+                        Absent
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      ) : (
+        !loading && <p className="text-center py-4">No students found.</p>
+      )}
+
 
 
         <div className="overflow-x-auto">
