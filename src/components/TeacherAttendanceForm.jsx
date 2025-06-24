@@ -57,11 +57,14 @@ export default function TeacherAttendanceForm({ className }) {
   }, [className]);
 
   const handleMarkAttendance = async (student) => {
+    const { data: { user } } = await supabase.auth.getUser();
+    const teacherId = user ? user.id : null; // Get the current teacher's ID
+
     const newData = {
       ...attendanceData,
       [student.roll_number]: {
         present: true,
-        marked_by: "teacher", // or teacher ID
+        marked_by: teacherId,
       },
     };
 
@@ -81,9 +84,9 @@ export default function TeacherAttendanceForm({ className }) {
           data: {
             [student.roll_number]: {
               present: true,
-              marked_by: "teacher",
+              marked_by: teacherId,
             },
-          },
+          }
         },
       ]);
     }

@@ -105,7 +105,7 @@ export default function Dashboard() {
                   ⬅ Back to Class List
                 </button>
               </div>
-              <TeacherAttendanceForm className={selectedClass} />
+              <TeacherAttendanceForm className={selectedClass} key={Date.now()} />
             </>
           )}
         </div>
