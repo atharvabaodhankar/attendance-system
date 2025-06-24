@@ -26,24 +26,29 @@ export default function Register() {
 
     const { email, password, name, class_name, roll_number, role } = form;
 
-    const { data, error } = await supabase.auth.signUp({ email, password });
-
-    if (error) {
-      alert(error.message);
-      setLoading(false);
-      return;
-    }
-
-    const user = data.user;
-
-    const { error: insertError } = await supabase.from("users").insert({
-      id: user.id,
-      name,
-      email,
-      role,
-      class_name: role === "student" ? class_name : null,
-      roll_number: role === "student" ? roll_number : null,
-    });
+    const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+      });
+      
+      if (error) {
+        alert(error.message);
+        return;
+      }
+      
+      const userId = data?.user?.id;
+      console.log("DEBUG: Supabase Auth UID =>", userId); // ✅ CHECK THIS
+      
+      // INSERT — must pass the same id as auth.uid()
+      const { error: insertError } = await supabase.from("users").insert({
+        id: userId,
+        name,
+        email,
+        class_name,
+        role,
+        roll_number: role === "student" ? roll_number : null,
+      });
+      
 
     if (insertError) {
       alert(insertError.message);
