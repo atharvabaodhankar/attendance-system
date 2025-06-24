@@ -19,6 +19,14 @@ export default function Dashboard() {
         navigate('/'); // Redirect to login if user is not found or session is invalid
         return;
       }
+
+      // Check if email is confirmed
+      if (!user.email_confirmed_at) {
+        alert('Please confirm your email address to log in.');
+        await supabase.auth.signOut(); // Sign out the unconfirmed user
+        navigate('/'); // Redirect to login page
+        return;
+      }
       console.log('User ID for fetching:', user.id);
       const { data, error } = await supabase.from('users').select('*').eq('id', user.id).single();
       console.log('Data from users table:', data);

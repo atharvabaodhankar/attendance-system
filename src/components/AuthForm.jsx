@@ -37,23 +37,10 @@ export default function AuthForm() {
   
       if (signUpError) return setError(signUpError.message);
 
-      if (data.user) {
-        const { error: insertError } = await supabase.from('users').insert({
-          id: data.user.id,
-          name,
-          role,
-          ...(role === 'student' && { roll_number: rollNumber }),
-        });
-
-        if (insertError) {
-          console.error('Failed to insert user profile:', insertError.message, insertError);
-          setError('Registration successful, but failed to create user profile. Please contact support. Error: ' + insertError.message);
-          return;
-        }
-        console.log('✅ User profile inserted');
-      }
-      alert('Registration successful! Check your email to confirm your account.');
-      navigate("/dashboard"); // Navigate to dashboard after successful registration and profile insert
+      alert('Registration successful! Check your email to confirm your account. You will be redirected to the login page.');
+      // Do not navigate to dashboard immediately after sign-up. User must confirm email first.
+      // The user profile will be created in Dashboard.jsx upon successful login after email confirmation.
+      navigate("/"); // Redirect to home/login page
     }
   };
   
