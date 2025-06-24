@@ -2,11 +2,13 @@ import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabaseClient";
 import LogoutButton from "../components/LogoutButton";
 import StudentAttendance from "../components/StudentAttendance";
+import TeacherAttendanceForm from "../components/TeacherAttendanceForm";
 
 export default function Dashboard() {
   const [userData, setUserData] = useState(null);
   const [sessionUserId, setSessionUserId] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [selectedClass, setSelectedClass] = useState(null); // For teacher class selection
 
   useEffect(() => {
     const loadUserData = async () => {
@@ -21,7 +23,6 @@ export default function Dashboard() {
 
       setSessionUserId(user.id); // Save auth UID
 
-      // Fetch user profile from `users` table
       const { data, error } = await supabase
         .from("users")
         .select("*")
@@ -76,18 +77,37 @@ export default function Dashboard() {
       {/* TEACHER VIEW */}
       {userData.role === "teacher" && (
         <div className="space-y-4">
-          <p className="text-lg font-semibold mb-2">
-            📚 Select a Class to Manage:
-          </p>
-          {["CM1k", "CM2k", "CM3k", "CM4k", "CM5k", "CM6k"].map((cls) => (
-            <button
-              key={cls}
-              onClick={() => (window.location.href = `/dashboard/class/${cls}`)}
-              className="block w-full bg-blue-100 border border-blue-400 hover:bg-blue-200 px-4 py-2 rounded text-left"
-            >
-              {cls}
-            </button>
-          ))}
+          {!selectedClass ? (
+            <>
+              <p className="text-lg font-semibold mb-2">
+                📚 Select a Class to Manage:
+              </p>
+              {["CM1k", "CM2k", "CM3k", "CM4k", "CM5k", "CM6k"].map((cls) => (
+                <button
+                  key={cls}
+                  onClick={() => setSelectedClass(cls)}
+                  className="block w-full bg-blue-100 border border-blue-400 hover:bg-blue-200 px-4 py-2 rounded text-left"
+                >
+                  {cls}
+                </button>
+              ))}
+            </>
+          ) : (
+            <>
+              <div className="flex justify-between items-center mb-2">
+                <h3 className="text-xl font-bold">
+                  ✏️ Mark Attendance – {selectedClass}
+                </h3>
+                <button
+                  onClick={() => setSelectedClass(null)}
+                  className="text-sm text-blue-500 underline"
+                >
+                  ⬅ Back to Class List
+                </button>
+              </div>
+              <TeacherAttendanceForm className={selectedClass} />
+            </>
+          )}
         </div>
       )}
     </div>

@@ -61,6 +61,7 @@ export default function StudentAttendance({ user }) {
       const total = enriched.length;
       const present = enriched.filter((r) => r.present).length;
       setPercentage(total > 0 ? ((present / total) * 100).toFixed(1) : "0");
+      enriched.sort((a, b) => new Date(b.date) - new Date(a.date));
 
       setRecords(enriched);
       setLoading(false);
@@ -88,9 +89,24 @@ export default function StudentAttendance({ user }) {
         <tbody>
           {records.map((rec, idx) => (
             <tr key={idx} className="border-b">
-              <td className="p-2 border">{new Date(rec.date).toLocaleDateString()}</td>
-              <td className="p-2 border">{rec.present ? "✅ Present" : "❌ Absent"}</td>
-              <td className="p-2 border">{rec.teacher}</td>
+              <td className="p-2 border">
+                {new Date(rec.date).toLocaleDateString()}
+              </td>
+              <td
+                className={`p-2 border font-semibold ${
+                  rec.present ? "text-green-600" : "text-red-500"
+                }`}
+              >
+                {rec.present ? "✅ Present" : "❌ Absent"}
+              </td>
+
+              <td className="p-2 border">
+                {rec.teacher === "Unknown" ? (
+                  <span className="text-red-500 italic">Unknown</span>
+                ) : (
+                  rec.teacher
+                )}
+              </td>
             </tr>
           ))}
         </tbody>
