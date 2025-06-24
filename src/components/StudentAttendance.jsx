@@ -1,49 +1,100 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabaseClient";
 
-export default function StudentAttendance({ userId, className }) {
+export default function StudentAttendance({ user }) {
   const [records, setRecords] = useState([]);
+  const [percentage, setPercentage] = useState(0);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchAttendance = async () => {
+      if (!user) return;
+
+      const { class_name, roll_number } = user;
+      if (!class_name || !roll_number) return;
+
+      // 1. Get all attendance for user's class
       const { data, error } = await supabase
         .from("attendance")
-        .select("date, data")
-        .eq("class_name", className)
-        .order("date", { ascending: false });
+        .select("*")
+        .eq("class_name", class_name);
 
       if (error) {
-        console.error("Failed to load attendance:", error);
+        console.error("Attendance fetch error:", error.message);
         return;
       }
 
-      const formatted = data.map((entry) => ({
-        date: entry.date,
-        status: entry.data?.[userId] || "absent",
+      // 2. Extract entries where this student is present in the JSON
+      const studentEntries = [];
+
+      data.forEach((record) => {
+        const entry = record.data[roll_number];
+        if (entry) {
+          studentEntries.push({
+            date: record.date,
+            present: entry.present,
+            marked_by: entry.marked_by,
+          });
+        }
+      });
+
+      // 3. Get teacher names
+      const teacherIds = [...new Set(studentEntries.map((e) => e.marked_by))];
+      let teacherMap = {};
+
+      if (teacherIds.length > 0) {
+        const { data: teachers } = await supabase
+          .from("users")
+          .select("id, name, email")
+          .in("id", teacherIds);
+
+        teachers.forEach((t) => {
+          teacherMap[t.id] = t.name || t.email;
+        });
+      }
+
+      const enriched = studentEntries.map((rec) => ({
+        ...rec,
+        teacher: teacherMap[rec.marked_by] || "Unknown",
       }));
 
-      setRecords(formatted);
+      const total = enriched.length;
+      const present = enriched.filter((r) => r.present).length;
+      setPercentage(total > 0 ? ((present / total) * 100).toFixed(1) : "0");
+
+      setRecords(enriched);
       setLoading(false);
     };
 
     fetchAttendance();
-  }, [userId, className]);
+  }, [user]);
 
-  if (loading) return <p>Loading attendance...</p>;
-
-  if (records.length === 0) return <p className="text-gray-500">No attendance records found.</p>;
+  if (loading) return <p className="text-center">Loading attendance...</p>;
 
   return (
-    <ul className="mt-3 space-y-2">
-      {records.map(({ date, status }) => (
-        <li key={date} className="flex justify-between border px-3 py-1 rounded">
-          <span>{date}</span>
-          <span className={status === "present" ? "text-green-600 font-bold" : "text-red-600 font-bold"}>
-            {status}
-          </span>
-        </li>
-      ))}
-    </ul>
+    <div className="p-4 bg-white border rounded shadow">
+      <h2 className="text-2xl font-semibold mb-2 text-center">
+        Attendance: <span className="text-green-600">{percentage}%</span>
+      </h2>
+
+      <table className="w-full text-sm mt-4">
+        <thead className="bg-gray-100">
+          <tr>
+            <th className="p-2 border">Date</th>
+            <th className="p-2 border">Status</th>
+            <th className="p-2 border">Marked By</th>
+          </tr>
+        </thead>
+        <tbody>
+          {records.map((rec, idx) => (
+            <tr key={idx} className="border-b">
+              <td className="p-2 border">{new Date(rec.date).toLocaleDateString()}</td>
+              <td className="p-2 border">{rec.present ? "✅ Present" : "❌ Absent"}</td>
+              <td className="p-2 border">{rec.teacher}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   );
 }

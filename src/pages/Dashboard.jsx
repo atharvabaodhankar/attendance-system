@@ -5,6 +5,7 @@ import StudentAttendance from "../components/StudentAttendance";
 
 export default function Dashboard() {
   const [userData, setUserData] = useState(null);
+  const [sessionUserId, setSessionUserId] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -17,6 +18,8 @@ export default function Dashboard() {
         window.location.href = "/login";
         return;
       }
+
+      setSessionUserId(user.id); // Save auth UID
 
       // Fetch user profile from `users` table
       const { data, error } = await supabase
@@ -51,7 +54,7 @@ export default function Dashboard() {
 
       {/* STUDENT VIEW */}
       {userData.role === "student" && (
-        <div className="p-4 border rounded">
+        <div className="p-4 border rounded space-y-2">
           <p>
             <strong>Class:</strong> {userData.class_name}
           </p>
@@ -61,8 +64,11 @@ export default function Dashboard() {
           <p className="mt-4 text-lg font-semibold">📅 Attendance Record:</p>
 
           <StudentAttendance
-            userId={userData.id}
-            className={userData.class_name}
+            user={{
+              id: sessionUserId,
+              class_name: userData.class_name,
+              roll_number: userData.roll_number,
+            }}
           />
         </div>
       )}
