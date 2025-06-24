@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabaseClient";
 import LogoutButton from "../components/LogoutButton";
+import StudentAttendance from "../components/StudentAttendance";
 
 export default function Dashboard() {
   const [userData, setUserData] = useState(null);
