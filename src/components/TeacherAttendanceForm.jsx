@@ -1,114 +1,135 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabaseClient";
+import toast from "react-hot-toast";
 
 export default function TeacherAttendanceForm({ className }) {
   const [students, setStudents] = useState([]);
-  const [attendance, setAttendance] = useState({});
-  const [userId, setUserId] = useState(null);
+  const [attendanceData, setAttendanceData] = useState({});
   const [loading, setLoading] = useState(true);
-  const [submitting, setSubmitting] = useState(false);
+  const [recordId, setRecordId] = useState(null);
+
+  const today = new Date().toISOString().split("T")[0];
 
   useEffect(() => {
-    const load = async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
+    const fetchData = async () => {
+      setLoading(true);
 
-      if (!user) {
-        alert("Not logged in");
+      // 1. Fetch all students in the class
+      const { data: users, error: userError } = await supabase
+        .from("users")
+        .select("id, name, roll_number")
+        .eq("class_name", className)
+        .eq("role", "student")
+        .order("roll_number", { ascending: true });
+
+      if (userError) {
+        toast.error("Error fetching students");
+        console.error(userError);
+        setLoading(false);
         return;
       }
 
-      setUserId(user.id);
-
-      const { data, error } = await supabase
-        .from("users")
-        .select("*")
+      // 2. Fetch attendance row for today
+      const { data: attendanceRows, error: attError } = await supabase
+        .from("attendance")
+        .select("id, data")
         .eq("class_name", className)
-        .eq("role", "student");
+        .eq("date", today)
+        .single();
 
-      if (error) {
-        console.error(error);
-      } else {
-        setStudents(data);
+      let markedRolls = {};
+      if (attendanceRows) {
+        markedRolls = attendanceRows.data || {};
+        setAttendanceData(markedRolls);
+        setRecordId(attendanceRows.id);
       }
 
+      // 3. Filter unmarked students
+      const unmarked = users.filter(
+        (s) => !markedRolls.hasOwnProperty(s.roll_number)
+      );
+
+      setStudents(unmarked);
       setLoading(false);
     };
 
-    load();
+    fetchData();
   }, [className]);
 
-  const handleCheckboxChange = (roll) => {
-    setAttendance((prev) => ({
-      ...prev,
-      [roll]: {
-        present: !prev[roll]?.present,
-        marked_by: userId,
+  const handleMarkAttendance = async (student) => {
+    const newData = {
+      ...attendanceData,
+      [student.roll_number]: {
+        present: true,
+        marked_by: "teacher", // or teacher ID
       },
-    }));
-  };
+    };
 
-  const handleSubmit = async () => {
-    if (!userId || Object.keys(attendance).length === 0) {
-      alert("Mark attendance first.");
-      return;
-    }
-
-    setSubmitting(true);
-
-    const today = new Date().toISOString().split("T")[0];
-
-    const { data, error } = await supabase
-      .from("attendance")
-      .insert([
+    let result;
+    if (recordId) {
+      // Update existing row
+      result = await supabase
+        .from("attendance")
+        .update({ data: newData })
+        .eq("id", recordId);
+    } else {
+      // Insert new row
+      result = await supabase.from("attendance").insert([
         {
           class_name: className,
           date: today,
-          data: attendance,
+          data: {
+            [student.roll_number]: {
+              present: true,
+              marked_by: "teacher",
+            },
+          },
         },
       ]);
-
-    if (error) {
-      console.error("Submit error:", error.message);
-      alert("Error saving attendance");
-    } else {
-      alert("Attendance saved!");
     }
 
-    setSubmitting(false);
+    if (result.error) {
+      toast.error("Error marking attendance");
+      console.error(result.error);
+    } else {
+      toast.success(`Marked ✅ Roll No: ${student.roll_number}`);
+      setAttendanceData(newData);
+      setStudents((prev) =>
+        prev.filter((s) => s.roll_number !== student.roll_number)
+      );
+    }
   };
 
-  if (loading) return <p className="text-center">Loading students...</p>;
-
   return (
-    <div className="p-4 border rounded bg-white shadow space-y-4">
-      <h2 className="text-xl font-semibold">Mark Attendance for {className}</h2>
+    <div className="space-y-4 border p-4 rounded bg-gray-50">
+      <h2 className="text-lg font-semibold mb-2">
+        Students Not Yet Marked Today ({today})
+      </h2>
 
-      {students.length === 0 && <p>No students found in this class.</p>}
-
-      <ul className="space-y-2">
-        {students.map((stu) => (
-          <li key={stu.roll_number} className="flex items-center gap-4">
-            <label className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                checked={attendance[stu.roll_number]?.present || false}
-                onChange={() => handleCheckboxChange(stu.roll_number)}
-              />
-              {stu.name} ({stu.roll_number})
-            </label>
-          </li>
-        ))}
-      </ul>
-
-      <button
-        onClick={handleSubmit}
-        disabled={submitting}
-        className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-50"
-      >
-        {submitting ? "Saving..." : "Submit Attendance"}
-      </button>
+      {loading ? (
+        <p>Loading students...</p>
+      ) : students.length === 0 ? (
+        <p className="text-green-600">✅ All students have been marked today!</p>
+      ) : (
+        <ul className="space-y-2">
+          {students.map((student) => (
+            <li
+              key={student.id}
+              className="flex justify-between items-center bg-white p-2 rounded shadow-sm"
+            >
+              <span>
+                {student.roll_number} - {student.name}
+              </span>
+              <button
+                onClick={() => handleMarkAttendance(student)}
+                className="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600"
+              >
+                Mark Present
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }
