@@ -1,17 +1,52 @@
-import { Routes, Route } from "react-router-dom";
-import Register from "./pages/Register";
-import Login from "./pages/Login";
-import Dashboard from "./pages/Dashboard";
-import ClassAttendance from "./pages/ClassAttendance";
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import Login from './pages/auth/Login';
+import Register from './pages/auth/Register';
+import TeacherDashboard from './pages/teacher/Dashboard';
+import StudentDashboard from './pages/student/Dashboard';
+import AdminDashboard from './pages/admin/Dashboard';
+import ProtectedRoute from './components/ProtectedRoute';
+import Unauthorized from './pages/auth/Unauthorized';
 
 function App() {
   return (
-    <Routes>
-      <Route path="/" element={<Register />} />
-      <Route path="/login" element={<Login />} />
-      <Route path="/dashboard" element={<Dashboard />} />
-      <Route path="/dashboard/class/:class_name" element={<ClassAttendance />} />
-    </Routes>
+    <Router>
+      <Routes>
+        {/* Public Routes */}
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+        <Route path="/unauthorized" element={<Unauthorized />} />
+
+        {/* Protected Routes */}
+        <Route
+          path="/teacher/*"
+          element={
+            <ProtectedRoute allowedRoles={['teacher']}>
+              <TeacherDashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/student/*"
+          element={
+            <ProtectedRoute allowedRoles={['student']}>
+              <StudentDashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/*"
+          element={
+            <ProtectedRoute allowedRoles={['admin']}>
+              <AdminDashboard />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Default Redirect */}
+        <Route path="/" element={<Navigate to="/login" replace />} />
+        <Route path="*" element={<Navigate to="/login" replace />} />
+      </Routes>
+    </Router>
   );
 }
 
