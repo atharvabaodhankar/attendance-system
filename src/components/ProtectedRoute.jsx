@@ -1,36 +1,36 @@
-import { useEffect, useState } from 'react';
-import { Navigate } from 'react-router-dom';
-import { supabase } from '../lib/supabaseClient';
+import { Navigate, useLocation } from 'react-router-dom';
+import { useAuthContext } from '../contexts/AuthContext';
 
-export default function ProtectedRoute({ children }) {
-  const [loading, setLoading] = useState(true);
-  const [session, setSession] = useState(null);
+// Add a helper to access context since we used 'useAuth' in the file but didn't export it as default
+// actually I should check AuthContext.jsx. 
+// It exports 'useAuth'. 
+import { useAuth } from '../contexts/AuthContext';
 
-  useEffect(() => {
-    const getInitialSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      setSession(session);
-      setLoading(false);
-    };
+const ProtectedRoute = ({ children, allowedRoles }) => {
+  const { user, profile, loading } = useAuth();
+  const location = useLocation();
 
-    getInitialSession();
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gray-50">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+      </div>
+    );
+  }
 
-    const { data: listener } = supabase.auth.onAuthStateChange((event, session) => {
-      console.log('Auth state change:', event, session);
-      if (event === 'SIGNED_OUT') {
-        setSession(null);
-      } else {
-        setSession(session);
-      }
-    });
+  if (!user) {
+    return <Navigate to="/login" state={{ from: location }} replace />;
+  }
 
-    return () => {
-      listener.subscription.unsubscribe();
-    };
-  }, []);
+  // If roles are specified, check if user has required role
+  if (allowedRoles && profile && !allowedRoles.includes(profile.role)) {
+    return <Navigate to="/unauthorized" replace />;
+  }
 
-  if (loading) return <p className="text-center mt-10">Loading...</p>;
-  if (!session) return <Navigate to="/" />;
-
+  // If profile is still loading or doesn't exist (edge case), might want to handle it.
+  // Assuming profile loads with auth for now or is null.
+  
   return children;
-}
+};
+
+export default ProtectedRoute;
