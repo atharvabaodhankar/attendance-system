@@ -3,6 +3,7 @@ import Login from './pages/auth/Login';
 import Register from './pages/auth/Register';
 import TeacherDashboard from './pages/teacher/Dashboard';
 import Classrooms from './pages/teacher/Classrooms';
+import SessionManager from './pages/teacher/SessionManager';
 import StudentDashboard from './pages/student/Dashboard';
 import AdminDashboard from './pages/admin/Dashboard';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -25,6 +26,7 @@ function App() {
               <Routes>
                  <Route path="/" element={<TeacherDashboard />} />
                  <Route path="/classrooms" element={<Classrooms />} />
+                 <Route path="/classrooms/:classroomId/session" element={<SessionManager />} />
               </Routes>
             </ProtectedRoute>
           }
