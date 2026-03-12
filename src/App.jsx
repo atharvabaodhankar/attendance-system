@@ -5,6 +5,7 @@ import TeacherDashboard from './pages/teacher/Dashboard';
 import Classrooms from './pages/teacher/Classrooms';
 import SessionManager from './pages/teacher/SessionManager';
 import StudentDashboard from './pages/student/Dashboard';
+import ScanAttendance from './pages/student/ScanAttendance';
 import AdminDashboard from './pages/admin/Dashboard';
 import ProtectedRoute from './components/ProtectedRoute';
 import Unauthorized from './pages/auth/Unauthorized';
@@ -35,7 +36,10 @@ function App() {
           path="/student/*"
           element={
             <ProtectedRoute allowedRoles={['student']}>
-              <StudentDashboard />
+              <Routes>
+                 <Route path="/" element={<StudentDashboard />} />
+                 <Route path="/scan" element={<ScanAttendance />} />
+              </Routes>
             </ProtectedRoute>
           }
         />
