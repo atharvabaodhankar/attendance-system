@@ -41,15 +41,17 @@ export const AuthProvider = ({ children }) => {
         .from('profiles')
         .select('*')
         .eq('id', userId)
-        .single();
+        .maybeSingle(); // Use maybeSingle() to handle 0 rows without error
 
       if (error) {
         console.error('Error fetching profile:', error);
+        setProfile(null);
       } else {
         setProfile(data);
       }
     } catch (err) {
       console.error('Unexpected error fetching profile:', err);
+      setProfile(null);
     } finally {
       setLoading(false);
     }

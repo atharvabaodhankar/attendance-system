@@ -1,9 +1,4 @@
 import { Navigate, useLocation } from 'react-router-dom';
-import { useAuthContext } from '../contexts/AuthContext';
-
-// Add a helper to access context since we used 'useAuth' in the file but didn't export it as default
-// actually I should check AuthContext.jsx. 
-// It exports 'useAuth'. 
 import { useAuth } from '../contexts/AuthContext';
 
 const ProtectedRoute = ({ children, allowedRoles }) => {

@@ -162,8 +162,17 @@ CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER AS $$
 BEGIN
   INSERT INTO public.profiles (id, email, full_name, role)
-  VALUES (new.id, new.email, new.raw_user_meta_data->>'full_name', (new.raw_user_meta_data->>'role')::user_role);
+  VALUES (
+    new.id, 
+    COALESCE(new.email, new.raw_user_meta_data->>'email'),
+    COALESCE(new.raw_user_meta_data->>'full_name', 'User'),
+    COALESCE((new.raw_user_meta_data->>'role')::user_role, 'student')
+  );
   RETURN new;
+EXCEPTION
+  WHEN others THEN
+    RAISE LOG 'Error in handle_new_user: %', SQLERRM;
+    RETURN new;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
