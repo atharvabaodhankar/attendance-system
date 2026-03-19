@@ -5,7 +5,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { User, Loader2 } from 'lucide-react';
 
 const CompleteProfile = () => {
-  const { user, profile } = useAuth();
+  const { user, profile, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -17,6 +17,15 @@ const CompleteProfile = () => {
     batch: profile?.batch || '',
     roll_no: profile?.roll_no || ''
   });
+
+  // Show loading while auth context is loading
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <Loader2 className="animate-spin h-8 w-8 text-indigo-600" />
+      </div>
+    );
+  }
 
   const handleChange = (e) => {
     setFormData({
