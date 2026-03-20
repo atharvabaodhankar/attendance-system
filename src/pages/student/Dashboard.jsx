@@ -1,14 +1,23 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../services/supabaseClient';
 import AppLayout from '../../components/layout/AppLayout';
 import { Calendar, CheckCircle, AlertTriangle, XCircle, Loader2 } from 'lucide-react';
 
 const Dashboard = () => {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
+  const navigate = useNavigate();
   const [stats, setStats] = useState({ total: 0, present: 0, flagged: 0 });
   const [recentRecords, setRecentRecords] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  // Check if profile is complete
+  useEffect(() => {
+    if (profile && (!profile.prn || !profile.branch || !profile.year || !profile.batch || !profile.roll_no)) {
+      navigate('/student/complete-profile');
+    }
+  }, [profile, navigate]);
 
   useEffect(() => {
     fetchAttendanceData();
