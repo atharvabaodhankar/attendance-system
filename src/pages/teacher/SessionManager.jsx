@@ -24,9 +24,9 @@ const SessionManager = () => {
         .select('*')
         .eq('classroom_id', classroomId)
         .is('end_time', null) // Check for active sessions (no end_time)
-        .single();
+        .maybeSingle(); // Use maybeSingle() to handle 0 or 1 row
 
-      if (error && error.code !== 'PGRST116') { // PGRST116 is "Row not found"
+      if (error) {
          console.error('Error fetching session:', error);
       }
       setActiveSession(data);
