@@ -26,6 +26,7 @@ const AppLayout = ({ children }) => {
       case 'student':
         return [
           { name: 'Dashboard', path: '/student', icon: LayoutDashboard },
+          { name: 'My Classrooms', path: '/student/classrooms', icon: BookOpen },
           { name: 'Scan Attendance', path: '/student/scan', icon: QrCode },
           { name: 'History', path: '/student/history', icon: History },
           { name: 'Profile', path: '/student/profile', icon: User },
