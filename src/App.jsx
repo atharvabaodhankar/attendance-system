@@ -7,6 +7,7 @@ import SessionManager from './pages/teacher/SessionManager';
 import StudentDashboard from './pages/student/Dashboard';
 import ScanAttendance from './pages/student/ScanAttendance';
 import CompleteProfile from './pages/student/CompleteProfile';
+import StudentProfile from './pages/student/Profile';
 import AdminDashboard from './pages/admin/Dashboard';
 import ProtectedRoute from './components/ProtectedRoute';
 import Unauthorized from './pages/auth/Unauthorized';
@@ -41,6 +42,7 @@ function App() {
                  <Route path="/" element={<StudentDashboard />} />
                  <Route path="/scan" element={<ScanAttendance />} />
                  <Route path="/complete-profile" element={<CompleteProfile />} />
+                 <Route path="/profile" element={<StudentProfile />} />
               </Routes>
             </ProtectedRoute>
           }
