@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../services/supabaseClient';
 import AppLayout from '../../components/layout/AppLayout';
-import { BookOpen, Users, Clock, Plus, Loader2 } from 'lucide-react';
+import { BookOpen, Users, Clock, Plus, Loader2, FileText } from 'lucide-react';
 
 const Dashboard = () => {
   const { user } = useAuth();
@@ -68,13 +68,22 @@ const Dashboard = () => {
             <h1 className="text-2xl font-bold text-gray-900">Teacher Dashboard</h1>
             <p className="text-gray-600 mt-1">Manage your classrooms and attendance sessions</p>
           </div>
-          <Link
-            to="/teacher/classrooms"
-            className="flex items-center px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors"
-          >
-            <Plus size={20} className="mr-2" />
-            New Classroom
-          </Link>
+          <div className="flex space-x-3">
+            <Link
+              to="/teacher/reports"
+              className="flex items-center px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors"
+            >
+              <FileText size={20} className="mr-2" />
+              Reports
+            </Link>
+            <Link
+              to="/teacher/classrooms"
+              className="flex items-center px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors"
+            >
+              <Plus size={20} className="mr-2" />
+              New Classroom
+            </Link>
+          </div>
         </div>
 
         {/* Stats Cards */}

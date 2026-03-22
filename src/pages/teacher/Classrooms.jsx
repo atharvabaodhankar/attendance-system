@@ -41,6 +41,9 @@ const Classrooms = () => {
     e.preventDefault();
     setCreating(true);
     try {
+      // Generate random 6-character join code
+      const joinCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+      
       const { data, error } = await supabase
         .from('classrooms')
         .insert([
@@ -48,7 +51,8 @@ const Classrooms = () => {
             name: newClass.name,
             subject_code: newClass.subject_code,
             batch_filter: newClass.batch_filter || null,
-            teacher_id: user.id
+            teacher_id: user.id,
+            join_code: joinCode
           }
         ])
         .select();
@@ -105,14 +109,28 @@ const Classrooms = () => {
                      )}
                   </div>
                   <h3 className="mt-4 text-lg font-medium text-gray-900 truncate">{classroom.name}</h3>
-                  <div className="mt-4 flex space-x-3">
+                  
+                  {/* Join Code Display */}
+                  <div className="mt-4 p-3 bg-indigo-50 rounded-md border border-indigo-200">
+                    <p className="text-xs text-indigo-600 font-medium mb-1">Join Code</p>
+                    <p className="text-2xl font-bold text-indigo-900 tracking-wider font-mono">
+                      {classroom.join_code || 'N/A'}
+                    </p>
+                  </div>
+                  
+                  <div className="mt-4 flex flex-col space-y-2">
                      <Link 
                         to={`/teacher/classrooms/${classroom.id}/session`}
-                        className="flex-1 bg-indigo-50 text-indigo-700 px-4 py-2 rounded text-center text-sm font-medium hover:bg-indigo-100"
+                        className="bg-indigo-600 text-white px-4 py-2 rounded text-center text-sm font-medium hover:bg-indigo-700"
                      >
-                        Attendance Session
+                        Start Session
                      </Link>
-                     {/* Potentially add edit/delete here */}
+                     <Link 
+                        to={`/teacher/classrooms/${classroom.id}/students`}
+                        className="bg-gray-100 text-gray-700 px-4 py-2 rounded text-center text-sm font-medium hover:bg-gray-200"
+                     >
+                        View Students
+                     </Link>
                   </div>
                 </div>
               </div>
