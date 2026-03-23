@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { supabase } from '../../services/supabaseClient';
+import { useAuth } from '../../contexts/AuthContext';
 import AppLayout from '../../components/layout/AppLayout';
-import { QRCodeSVG } from 'qrcode.react';
+import { QRCodeSVG, QRCodeCanvas } from 'qrcode.react';
 import { Loader2, MapPin, Play, StopCircle } from 'lucide-react';
 
 const SessionManager = () => {
   const { classroomId } = useParams();
+  const { user } = useAuth(); // Use useAuth for user context
   const [activeSession, setActiveSession] = useState(null);
   const [loading, setLoading] = useState(true);
   const [locationRequired, setLocationRequired] = useState(false);
@@ -23,8 +25,8 @@ const SessionManager = () => {
         .from('attendance_sessions')
         .select('*')
         .eq('classroom_id', classroomId)
-        .is('end_time', null) // Check for active sessions (no end_time)
-        .maybeSingle(); // Use maybeSingle() to handle 0 or 1 row
+        .is('end_time', null)
+        .maybeSingle();
 
       if (error) {
          console.error('Error fetching session:', error);
@@ -38,13 +40,17 @@ const SessionManager = () => {
   };
 
   const startSession = async () => {
+    if (!user) {
+      alert("You must be logged in to start a session.");
+      return;
+    }
+
     setCreating(true);
     try {
       let lat = null;
       let long = null;
 
       if (locationRequired) {
-         // Get teacher location
          await new Promise((resolve, reject) => {
             navigator.geolocation.getCurrentPosition(
                (pos) => {
@@ -57,40 +63,14 @@ const SessionManager = () => {
          });
       }
 
-      // Generate a random QR token
       const qrToken = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
 
-      const { data, error } = await supabase
+      const { data: newSession, error: insertError } = await supabase
         .from('attendance_sessions')
         .insert([
           {
             classroom_id: classroomId,
-            qr_code: qrToken,
-            location_required: locationRequired,
-            teacher_latitude: lat,
-            teacher_longitude: long,
-            // teacher_id is handled by RLS or default? actually schema says teacher_id nullable but RLS checks auth.uid()=teacher_id
-            // Wait, standard insert RLS check auth.uid() = teacher_id means we must provide it OR define default.
-            // My schema definition for sessions: 
-            // teacher_id UUID REFERENCES public.profiles(id)
-            // It doesn't default to auth.uid(). We need to pass it.
-            // BUT wait, I can use supabase.auth.getUser() or just rely on the trigger/default helper if I had one.
-            // Let's pass it explicitly.
-          }
-        ])
-        .select();
-
-       // Wait, I need teacher_id. 
-       // I'll assume useAuth is available or I fetch user here.
-       const { data: userData } = await supabase.auth.getUser();
-       if (!userData.user) throw new Error("Not authenticated");
-
-       const { data: newSession, error: insertError } = await supabase
-        .from('attendance_sessions')
-        .insert([
-          {
-            classroom_id: classroomId,
-            teacher_id: userData.user.id,
+            teacher_id: user.id, // Correctly using user.id from useAuth
             qr_code: qrToken,
             location_required: locationRequired,
             teacher_latitude: lat,
@@ -104,7 +84,8 @@ const SessionManager = () => {
       setActiveSession(newSession);
       
     } catch (error) {
-      alert("Error starting session: " + error.message);
+      console.error("Session Error:", error);
+      alert("Error starting session: " + (error.message || "Failed to start session. Check your permissions."));
     } finally {
       setCreating(false);
     }
@@ -158,14 +139,15 @@ const SessionManager = () => {
           </div>
         ) : (
           <div className="bg-white p-8 rounded-lg shadow text-center space-y-6">
-             <div className="inline-block p-4 bg-white border-4 border-gray-900 rounded-lg">
-                <QRCodeSVG 
+             <div className="inline-block p-6 bg-white border-2 border-gray-100 rounded-2xl shadow-xl">
+                <QRCodeCanvas 
                    value={JSON.stringify({
                       sessionId: activeSession.id,
                       token: activeSession.qr_code,
-                      // We can include timestamp to prevent sharing static image if we rotate QR
                    })} 
-                   size={300} 
+                   size={256}
+                   level="H"
+                   marginSize={2}
                 />
              </div>
              
