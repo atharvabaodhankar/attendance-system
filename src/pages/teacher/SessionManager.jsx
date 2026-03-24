@@ -51,16 +51,35 @@ const SessionManager = () => {
       let long = null;
 
       if (locationRequired) {
-         await new Promise((resolve, reject) => {
+        setMessage && setMessage('Requesting location access...');
+        try {
+          await new Promise((resolve, reject) => {
+            if (!navigator.geolocation) {
+              reject(new Error("Geolocation is not supported by your browser."));
+              return;
+            }
             navigator.geolocation.getCurrentPosition(
-               (pos) => {
-                  lat = pos.coords.latitude;
-                  long = pos.coords.longitude;
-                  resolve();
-               },
-               (err) => reject(err)
+              (pos) => {
+                lat = pos.coords.latitude;
+                long = pos.coords.longitude;
+                resolve();
+              },
+              (err) => {
+                let msg = "Location error: ";
+                switch(err.code) {
+                  case err.PERMISSION_DENIED: msg += "Permission denied. Please enable location."; break;
+                  case err.POSITION_UNAVAILABLE: msg += "Position unavailable."; break;
+                  case err.TIMEOUT: msg += "Request timed out."; break;
+                  default: msg += "Unknown error.";
+                }
+                reject(new Error(msg));
+              },
+              { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
             );
-         });
+          });
+        } catch (locErr) {
+          throw locErr; // Rethrow to be caught by the main catch block
+        }
       }
 
       const qrToken = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
