@@ -76,31 +76,46 @@ const ScanAttendance = () => {
 
       // 4. Location Check if required
       if (session.location_required) {
-        setMessage('Verifying location...');
+        setMessage('Verifying strict location...');
         try {
            const pos = await new Promise((resolve, reject) => {
-              navigator.geolocation.getCurrentPosition(resolve, reject);
+              navigator.geolocation.getCurrentPosition(resolve, reject, { 
+                enableHighAccuracy: true, 
+                timeout: 10000, 
+                maximumAge: 0 
+              });
            });
+           
            studentLat = pos.coords.latitude;
            studentLong = pos.coords.longitude;
+           const accuracy = pos.coords.accuracy; // accuracy in meters
            setLocation({ lat: studentLat, long: studentLong });
 
-           // Calculate Distance (Haversine Formula) can be done here or DB
-           // For simple JS implementation:
-           const dist = getDistanceFromLatLonInKm(studentLat, studentLong, session.teacher_latitude, session.teacher_longitude) * 1000; // meters
-           
-           if (dist > (session.radius_meters || 100)) {
-              riskScore += 0.8; // High risk if far
-              // We could reject or just flag. SRS says "Student location shall be validated". 
-              // Let's flag heavily but maybe allow with warning? 
-              // SRS FR-15: "If location is enabled, student location shall be validated against teacher location"
-              // Usually strict validation means reject. 
-              // But let's mark as 'flagged' status if distance is too far.
+           // SECURITY: Accuracy Check
+           // If accuracy is > 100m, the signal is too weak/unreliable or potentially spoofed via cell-tower only
+           if (accuracy > 100) {
+             throw new Error(`Location signal too weak (Accuracy: ${Math.round(accuracy)}m). Please move to a clearer area or turn on high-accuracy GPS.`);
            }
+
+           const dist = getDistanceFromLatLonInKm(studentLat, studentLong, session.teacher_latitude, session.teacher_longitude) * 1000; // meters
+           const allowedRadius = session.radius_meters || 100;
+           
+           if (dist > allowedRadius) {
+              // SECURITY: Strict Blocking
+              throw new Error(`Access Denied: You are ${Math.round(dist - allowedRadius)}m outside the classroom range. Contact your teacher if this is an error.`);
+           }
+           
+           // Double check for mock properties (supported by some secure browsers/plugins)
+           if (pos.coords.isMocked) {
+             throw new Error("Security Alert: Mock location detected. Attendance will not be marked.");
+           }
+
         } catch (locErr) {
            console.error(locErr);
-           riskScore += 1.0; // Max risk if location needed but failed
-           // Could throw error here if strict.
+           if (locErr.message.includes("Access Denied") || locErr.message.includes("Security Alert") || locErr.message.includes("Location signal")) {
+             throw locErr;
+           }
+           throw new Error("Location verification failed. Please ensure GPS is ON and permissions are granted.");
         }
       }
 
